@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\FileController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
@@ -8,6 +9,9 @@ Route::get('/hello', function () {
     $name = "Nguyễn Văn A";
     return response()->json(["name" => "$name"], 200);
 });
+
+// upload
+Route::post('/files/upload', [FileController::class, 'upload']);
 
 // Các route CRUD của User
 Route::get('/users', [UserController::class, 'index']);

@@ -1,0 +1,72 @@
+Cách upload file 
+B1: chạy lệnh:
+php artisan storage:link
+Tạo symbolic link public/storage → storage/app/public
+
+Sau này URL file sẽ là: http://localhost:8080/storage/...
+B2: Tạo controller upload
+php artisan make:controller FileController
+
+
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Http\JsonResponse;
+
+class FileController extends Controller
+{
+    // POST /api/files/upload
+    public function upload(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:jpg,jpeg,png,webp|max:5120', // 5MB
+            'folder' => 'sometimes|string'
+        ]);
+
+        $file = $request->file('file');
+        $folder = $request->input('folder', 'products');
+
+        // tạo tên file duy nhất
+        $filename = time() . '-' . Str::random(8) . '.' . $file->getClientOriginalExtension();
+
+        // lưu file vào storage/app/public/{folder}
+        $path = $file->storeAs($folder, $filename, 'public');
+
+        // tạo URL truy cập file
+        $url = asset("storage/{$path}");
+
+        // trả JSON như Spring
+        return response()->json([
+            'fileName' => $filename,
+            'uploadedAt' => now(),
+            'url' => $url
+        ]);
+    }
+}
+
+B3: Routes
+use App\Http\Controllers\FileController;
+
+Route::post('/files/upload', [FileController::class, 'upload']);
+
+B5:Test Postman
+
+POST http://localhost:8080/api/files/upload
+
+Body → form-data
+
+Key: file → chọn file
+
+Key: folder → products (optional)
+
+Response JSON:
+
+{
+    "fileName": "173019231231-ab12cd34.png",
+    "uploadedAt": "2025-11-19T22:50:00.000000Z",
+    "url": "http://localhost:8080/storage/products/173019231231-ab12cd34.png"
+}
