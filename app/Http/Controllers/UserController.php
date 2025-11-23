@@ -2,55 +2,70 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Helpers\ApiResponse;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
     public function index()
     {
         $users = User::all();
-        return response()->json($users);
+        return ApiResponse::success($users, 'Lấy danh sách người dùng thành công');
     }
 
     public function store(Request $request)
     {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:6',
+        ]);
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => bcrypt($request->password)
+            'password' => Hash::make($request->password),
         ]);
-        return response()->json($user, 201);
+
+        return ApiResponse::success($user, 'Tạo người dùng thành công', 201);
     }
 
     public function show($id)
     {
         $user = User::find($id);
-        if (!$user) return response()->json(['message' => 'User không tồn tại'], 404);
-        return response()->json($user);
+        if (!$user) return ApiResponse::error('Người dùng không tồn tại', 404);
+
+        return ApiResponse::success($user);
     }
 
     public function update(Request $request, $id)
     {
         $user = User::find($id);
-        if (!$user) return response()->json(['message' => 'User không tồn tại'], 404);
+        if (!$user) return ApiResponse::error('Người dùng không tồn tại', 404);
+
+        $request->validate([
+            'name' => 'nullable|string|max:255',
+            'email' => 'nullable|email|unique:users,email,' . $id,
+            'password' => 'nullable|string|min:6',
+        ]);
 
         $user->update([
             'name' => $request->name ?? $user->name,
             'email' => $request->email ?? $user->email,
-            'password' => $request->password ? bcrypt($request->password) : $user->password
+            'password' => $request->password ? Hash::make($request->password) : $user->password,
         ]);
 
-        return response()->json($user);
+        return ApiResponse::success($user, 'Cập nhật người dùng thành công');
     }
 
     public function destroy($id)
     {
         $user = User::find($id);
-        if (!$user) return response()->json(['message' => 'User không tồn tại'], 404);
+        if (!$user) return ApiResponse::error('Người dùng không tồn tại', 404);
 
         $user->delete();
-        return response()->json(['message' => 'User đã bị xoá']);
+        return ApiResponse::success(null, 'Người dùng đã bị xoá');
     }
 }
