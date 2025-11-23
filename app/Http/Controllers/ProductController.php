@@ -19,7 +19,9 @@ class ProductController extends Controller
             'name',
             'image_url',
             'price',
-            'description'
+            'description',
+            'quantity',
+            'type',
         ]));
 
         return response()->json($product, 201);
@@ -41,7 +43,9 @@ class ProductController extends Controller
             'name',
             'image_url',
             'price',
-            'description'
+            'description',
+            'quantity',
+            'type',
         ]));
 
         return response()->json($product);
